@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>pre-almost.knit</title>
+    <meta charset="utf-8" />
+    <script src="pre-almost_files/header-attrs-2.10/header-attrs.js"></script>
+    <link href="pre-almost_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/sydney-fonts.css" type="text/css" />
+    <link rel="stylesheet" href="assets/sydney.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+## Background
+
+&lt;font face = 'Times New Roman', font size = 5.5&gt;Concrete is a common man-made material, it is widely used in building structures, roads and bridges, etc.&lt;/font&gt;
+
+&lt;font face = 'Times New Roman', font size = 5.5&gt;The ratio of these components can be varied within a wide range, which will affect the concrete compressive strength.&lt;/font&gt;
+
+
+&lt;font face = 'Times New Roman', font size = 5.5&gt;These include:&lt;/font&gt;
++ **Cement**
+
++ **Blast Furnace Slag**
+
++ **Fly Ash**
+
++ **Superplasticizer**
+
++ **Coarse Aggregate**
+
++ **Fine Aggregate**
+
++ **Water**
+
+---
+
+## Introduction
+
+
+
+###  Aim
+
+&lt;font face = 'Times New Roman', font size = 5.5&gt;&lt;b&gt;Predict the relationship between the compressive strength and composition of concrete.&lt;/b&gt;&lt;/font&gt;
+
+
+
+###  Method
+&lt;font face = 'Times New Roman', font size = 5.5&gt;&lt;b&gt;Multiple Linear Regression&lt;/b&gt;&lt;/font&gt;:&lt;font face = 'Times New Roman', font size = 5.5&gt; Forward and backward step wise variable selection using Akaike information criterion  (AIC).&lt;/font&gt;
+ 
+---
+
+## Dataset
+
+
+
+
+
+
+-  &lt;font face = 'Times New Roman', font size = 5.5&gt;The data is valid, consistent, original, complete and legible.&lt;/font&gt;
+
+   https://archive.ics.uci.edu/ml/datasets/Concrete+Compressive+Strength
+   
+
+-  &lt;font face = 'Times New Roman', font size = 5.5&gt;This data set has 1030 samples, 9 variables. It is subdivided into 8 quantitative input variables and 1 quantitative output variable.&lt;/font&gt;
+
+
+
+-  &lt;font face = 'Times New Roman', font size = 5.5&gt;This dataset was collected in 2007 and it is dated.&lt;/font&gt;
+
+
+
+- &lt;font face = 'Times New Roman', font size = 5.5&gt;First 6 rows of data shown below:&lt;/font&gt;
+
+
+
+
+| cement| blast_furnace_slag| fly_ash| water| superplasticizer| coarse_aggregate| fine_aggregate| age| compressive_strength|
+|------:|------------------:|-------:|-----:|----------------:|----------------:|--------------:|---:|--------------------:|
+|  540.0|                0.0|       0|   162|              2.5|           1040.0|          676.0|  28|             79.98611|
+|  540.0|                0.0|       0|   162|              2.5|           1055.0|          676.0|  28|             61.88737|
+|  332.5|              142.5|       0|   228|              0.0|            932.0|          594.0| 270|             40.26954|
+|  332.5|              142.5|       0|   228|              0.0|            932.0|          594.0| 365|             41.05278|
+|  198.6|              132.4|       0|   192|              0.0|            978.4|          825.5| 360|             44.29608|
+|  266.0|              114.0|       0|   228|              0.0|            932.0|          670.0|  90|             47.02985|
+
+
+![](pre-almost_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+
+---
+
+##Question
+
+&lt;br&gt;
+###How can we predict the concrete compressive strength?
+
+&lt;/br&gt;
+
+&lt;font face = 'Times New Roman', font size = 5.6&gt;We want to  predict the concrete compressive strength in the future when we have known the amount of each ingredient through our model.&lt;/font&gt;
+
+---
+
+## Data Analysis
+### Assumptions
+
+
+-  Linearity - the relationship between the compressive strength of concrete and components as well as age is linear.
+-  Independence - all the observations are independent of each other.
+
+-  Homoskedasticity - the errors have constant variance for all.
+
+-  Normality - the errors are distributed normally.
+
+
+---
+### Data Overview
+
+说些什么,图作用
+
+![](pre-almost_files/figure-html/unnamed-chunk-4-1.png)&lt;!-- --&gt;
+
+
+
+---
+### Data Explore
+
+#### Perform a multiple regression of compressive strength of concrete on the other variables using full model.
+
+We firstly overview the relationship between each variable.
+Then we put every variables in the dataset into our model.
+
+
+```
+##                    Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)         -23.164     26.588  -0.871    0.384
+## cement                0.120      0.008  14.110    0.000
+## blast_furnace_slag    0.104      0.010  10.245    0.000
+## fly_ash               0.088      0.013   6.988    0.000
+## water                -0.150      0.040  -3.741    0.000
+## superplasticizer      0.291      0.093   3.110    0.002
+## coarse_aggregate      0.018      0.009   1.919    0.055
+## fine_aggregate        0.020      0.011   1.883    0.060
+## age                   0.114      0.005  21.046    0.000
+```
+
+```
+##             cement blast_furnace_slag            fly_ash              water 
+##           7.488657           7.276529           6.171455           7.004663 
+##   superplasticizer   coarse_aggregate     fine_aggregate                age 
+##           2.965297           5.076044           7.005346           1.118357
+```
+
+
+Dropping values using an information criterion，doing backward selection.
+We use step() function to remove the least informative variables to fit our model.
+
+
+```
+## 
+## Call:
+## lm(formula = compressive_strength ~ cement + blast_furnace_slag + 
+##     fly_ash + water + superplasticizer + coarse_aggregate + fine_aggregate + 
+##     age, data = concrete)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -28.653  -6.303   0.704   6.562  34.446 
+## 
+## Coefficients:
+##                      Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)        -23.163756  26.588421  -0.871 0.383851    
+## cement               0.119785   0.008489  14.110  &lt; 2e-16 ***
+## blast_furnace_slag   0.103847   0.010136  10.245  &lt; 2e-16 ***
+## fly_ash              0.087943   0.012585   6.988 5.03e-12 ***
+## water               -0.150298   0.040179  -3.741 0.000194 ***
+## superplasticizer     0.290687   0.093460   3.110 0.001921 ** 
+## coarse_aggregate     0.018030   0.009394   1.919 0.055227 .  
+## fine_aggregate       0.020154   0.010703   1.883 0.059968 .  
+## age                  0.114226   0.005427  21.046  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 10.4 on 1021 degrees of freedom
+## Multiple R-squared:  0.6155,	Adjusted R-squared:  0.6125 
+## F-statistic: 204.3 on 8 and 1021 DF,  p-value: &lt; 2.2e-16
+```
+
+
+---
+
+### Data Explore
+
+
+#### Perform a multiple regression of compressive strength of concrete on the other variables using null model.
+
+
+
+Dropping values using an information criterion，doing forwards selection.
+We use step() function to add the most informative variables to fit our model. 
+
+
+```
+## 
+## Call:
+## lm(formula = compressive_strength ~ cement + superplasticizer + 
+##     age + blast_furnace_slag + water + fly_ash, data = concrete)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -29.014  -6.474   0.650   6.546  34.726 
+## 
+## Coefficients:
+##                     Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)        29.030224   4.212476   6.891 9.64e-12 ***
+## cement              0.105427   0.004248  24.821  &lt; 2e-16 ***
+## superplasticizer    0.239003   0.084586   2.826  0.00481 ** 
+## age                 0.113495   0.005408  20.987  &lt; 2e-16 ***
+## blast_furnace_slag  0.086494   0.004975  17.386  &lt; 2e-16 ***
+## water              -0.218292   0.021128 -10.332  &lt; 2e-16 ***
+## fly_ash             0.068708   0.007736   8.881  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 10.41 on 1023 degrees of freedom
+## Multiple R-squared:  0.614,	Adjusted R-squared:  0.6117 
+## F-statistic: 271.2 on 6 and 1023 DF,  p-value: &lt; 2.2e-16
+```
+
+Obviously, the two models are different,  we need to choose the one which is fitter.
+
+
+---
+### Models performance
+
+#### In sample
+
+```
+## Argument 'df_method' is deprecated. Please use 'ci_method' instead.
+## Argument 'df_method' is deprecated. Please use 'ci_method' instead.
+```
+
+&lt;table style="border-collapse:collapse; border:none;"&gt;
+&lt;tr&gt;
+&lt;th style="border-top: double; text-align:center; font-style:normal; font-weight:bold; padding:0.2cm;  text-align:left; "&gt;&amp;nbsp;&lt;/th&gt;
+&lt;th colspan="2" style="border-top: double; text-align:center; font-style:normal; font-weight:bold; padding:0.2cm; "&gt;Forward model&lt;/th&gt;
+&lt;th colspan="2" style="border-top: double; text-align:center; font-style:normal; font-weight:bold; padding:0.2cm; "&gt;Backward model&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal;  text-align:left; "&gt;Predictors&lt;/td&gt;
+&lt;td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal;  "&gt;Estimates&lt;/td&gt;
+&lt;td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal;  "&gt;p&lt;/td&gt;
+&lt;td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal;  "&gt;Estimates&lt;/td&gt;
+&lt;td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal;  "&gt;p&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; "&gt;(Intercept)&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;29.03&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&amp;#45;23.16&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.384&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; "&gt;cement&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.11&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.12&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; "&gt;superplasticizer&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.24&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;0.005&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.29&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;0.002&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; "&gt;age&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.11&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.11&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; "&gt;blast furnace slag&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.09&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.10&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; "&gt;water&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&amp;#45;0.22&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&amp;#45;0.15&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; "&gt;fly ash&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.07&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.09&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;strong&gt;&amp;lt;0.001&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; "&gt;coarse aggregate&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.02&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.055&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; "&gt;fine aggregate&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.02&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:center;  "&gt;0.060&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; padding-top:0.1cm; padding-bottom:0.1cm; border-top:1px solid;"&gt;Observations&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; padding-top:0.1cm; padding-bottom:0.1cm; text-align:left; border-top:1px solid;" colspan="2"&gt;1030&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; padding-top:0.1cm; padding-bottom:0.1cm; text-align:left; border-top:1px solid;" colspan="2"&gt;1030&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; padding-top:0.1cm; padding-bottom:0.1cm;"&gt;R&lt;sup&gt;2&lt;/sup&gt; / R&lt;sup&gt;2&lt;/sup&gt; adjusted&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; padding-top:0.1cm; padding-bottom:0.1cm; text-align:left;" colspan="2"&gt;0.614 / 0.612&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; padding-top:0.1cm; padding-bottom:0.1cm; text-align:left;" colspan="2"&gt;0.615 / 0.612&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; text-align:left; padding-top:0.1cm; padding-bottom:0.1cm;"&gt;AIC&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; padding-top:0.1cm; padding-bottom:0.1cm; text-align:left;" colspan="2"&gt;7758.047&lt;/td&gt;
+&lt;td style=" padding:0.2cm; text-align:left; vertical-align:top; padding-top:0.1cm; padding-bottom:0.1cm; text-align:left;" colspan="2"&gt;7758.064&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;/table&gt;
+
+For this compare, the AIC of forward model is little smaller than backward model, forward model could be little better.
+
+---
+
+#### Out of sample
+
+```
+## Linear Regression 
+## 
+## 1030 samples
+##    6 predictor
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold) 
+## Summary of sample sizes: 926, 927, 928, 927, 927, 927, ... 
+## Resampling results:
+## 
+##   RMSE      Rsquared   MAE     
+##   10.44822  0.6142288  8.321676
+## 
+## Tuning parameter 'intercept' was held constant at a value of TRUE
+```
+
+```
+## Linear Regression 
+## 
+## 1030 samples
+##    8 predictor
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold) 
+## Summary of sample sizes: 927, 928, 926, 926, 927, 927, ... 
+## Resampling results:
+## 
+##   RMSE      Rsquared   MAE     
+##   10.39745  0.6156144  8.277275
+## 
+## Tuning parameter 'intercept' was held constant at a value of TRUE
+```
+We do the CV estimation, and there are little differences between two models. therefore, we could choose the model which need less information.
+---
+
+### Data Explore
+
+
+#### The fitted model for the model selected.
+
+we choose forward model as our fitted model:
+
+`$$\widehat Strength = 29.03 + 0.11 cement + 0.24 superplasticizer + 0.11 age + 0.09 blast furnace slag  -0.22 water + 0.07 fly ash$$`
+We can see that the strength is affected more by superplasticizer and water have a negative effect to the strength.
+
+---
+
+### Assumptions Checking
+
+- Independence: Each observation is independent and cannot affect each other. So the independence of data can be satisfied.
+
+![](pre-almost_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+
+- Linearity: there’s no obvious pattern in the residual vs fitted values plot, so the assumption is satisfied.
+
+- Homoskedasticity: the residuals don’t appear to be fanning out or changing their variability over the range of the fitted values so the assumption is satisfied
+
+- Normality: in the QQ plot, the points are reasonably close to the diagonal line. The normality assumption is approximately satisfied.
+
+---
+
+### Reference
+xxx
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="assets/remark-zoom.js"></script>
+<script src="https://platform.twitter.com/widgets.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9",
+"navigation": {
+"scroll": false
+}
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

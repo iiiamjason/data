@@ -1,0 +1,302 @@
+---
+
+title: "Assume concrete strength"
+subtitle: "DATA2002 Presentation"
+author: "Lab06-early06"
+date: "2021"
+output:
+  xaringan::moon_reader:
+    css: ["default", "assets/sydney-fonts.css", "assets/sydney.css"]
+    self_contained: false # if true, fonts will be stored locally
+    seal: true # show a title slide with YAML information
+    nature:
+      beforeInit: ["assets/remark-zoom.js", "https://platform.twitter.com/widgets.js"]
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: '16:9' # alternatives '16:9' or '4:3' or others e.g. 13:9
+      navigation:
+        scroll: false # disable slide transitions by scrolling
+---
+
+## Background
+
+<font face = 'Times New Roman', font size = 5.5>Concrete is a common man-made material, it is widely used in building structures, roads and bridges, etc.</font>
+
+<font face = 'Times New Roman', font size = 5.5>The ratio of these components can be varied within a wide range, which will affect the concrete compressive strength.</font>
+
+
+<font face = 'Times New Roman', font size = 5.5>These include:</font>
++ **Cement**
+
++ **Blast Furnace Slag**
+
++ **Fly Ash**
+
++ **Superplasticizer**
+
++ **Coarse Aggregate**
+
++ **Fine Aggregate**
+
++ **Water**
+
+---
+
+## Introduction
+
+
+
+###  Aim
+
+<font face = 'Times New Roman', font size = 5.5><b>Predict the relationship between the compressive strength and composition of concrete.</b></font>
+
+
+
+###  Method
+<font face = 'Times New Roman', font size = 5.5><b>Multiple Linear Regression</b></font>:<font face = 'Times New Roman', font size = 5.5> Forward and backward step wise variable selection using Akaike information criterion  (AIC).</font>
+ 
+---
+
+## Dataset
+
+```{r, load_refs, echo=FALSE, cache=FALSE, message=FALSE}
+#install.packages("RefManageR")
+
+library(RefManageR)
+
+library(tidyverse)
+#install.packages("GGally")
+library(GGally)
+
+#install.packages("ggfortify")
+library(ggfortify)
+
+library(caret)
+library(knitr)
+library(readxl)
+ 
+library(usethis)
+ #加了个这个
+ 
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+```{r,results='hide'}
+#import data and rename attributes
+concrete =readxl::read_xls("/Users/fatx/Desktop/Concrete_Data.xls")
+concrete
+names(concrete)[1:9] <-c("cement","blast_furnace_slag","fly_ash","water","superplasticizer","coarse_aggregate","fine_aggregate","age","compressive_strength") 
+names(concrete)
+str(concrete)
+
+```
+
+-  <font face = 'Times New Roman', font size = 5.5>The data is valid, consistent, original, complete and legible.</font>
+
+   https://archive.ics.uci.edu/ml/datasets/Concrete+Compressive+Strength
+   
+
+-  <font face = 'Times New Roman', font size = 5.5>This data set has 1030 samples, 9 variables. It is subdivided into 8 quantitative input variables and 1 quantitative output variable.</font>
+
+
+
+-  <font face = 'Times New Roman', font size = 5.5>This dataset was collected in 2007 and it is dated.</font>
+
+
+
+- <font face = 'Times New Roman', font size = 5.5>First 6 rows of data shown below:</font>
+
+
+
+```{r}
+knitr::kable(head(concrete),
+             col.names =
+               c("cement","blast_furnace_slag","fly_ash","water","superplasticizer","coarse_aggregate","fine_aggregate","age","compressive_strength"))
+```
+
+
+```{r, results='hide'}
+summary(concrete$compressive_strength)
+#avg>mid 分布是右偏的，用直方图证实了这一点？？？？？？
+hist(concrete$compressive_strength)
+```
+
+---
+
+##Question
+
+<br>
+###How can we predict the concrete compressive strength?
+
+</br>
+
+<font face = 'Times New Roman', font size = 5.6>We want to  predict the concrete compressive strength in the future when we have known the amount of each ingredient through our model.</font>
+
+---
+
+## Data Analysis
+### Assumptions
+
+
+-  Linearity - the relationship between the compressive strength of concrete and components as well as age is linear.
+-  Independence - all the observations are independent of each other.
+
+-  Homoskedasticity - the errors have constant variance for all.
+
+-  Normality - the errors are distributed normally.
+
+
+---
+### Data Overview
+
+说些什么,图作用
+
+```{r, message=FALSE}
+GGally::ggpairs(concrete) + theme_bw()
+
+```
+
+
+
+---
+### Data Explore
+
+#### Perform a multiple regression of compressive strength of concrete on the other variables using full model.
+
+We firstly overview the relationship between each variable.
+Then we put every variables in the dataset into our model.
+
+```{r, message=FALSE}
+#在这里不知道是否需要一个boxplot 去check for gross outliers
+#boxplot(scale(concrete)) 如果需要可能是这样 但是x轴的坐标需要重新命名。
+
+#Full model
+concrete_full_lm = lm(compressive_strength ~ ., concrete)
+
+round(summary(concrete_full_lm)$coef, 3)
+
+car::vif(concrete_full_lm)
+
+```
+
+
+Dropping values using an information criterion，doing backward selection.
+We use step() function to remove the least informative variables to fit our model.
+
+```{r}
+
+#backward
+concrete_step_back =  step(concrete_full_lm, direction = "backward", trace = F)
+
+#check backward
+summary(concrete_step_back)
+
+```
+
+
+---
+
+### Data Explore
+
+
+#### Perform a multiple regression of compressive strength of concrete on the other variables using null model.
+
+```{r, message=FALSE}
+
+#NUll model
+concrete_null_lm = lm(compressive_strength ~ 1, concrete)
+
+```
+
+Dropping values using an information criterion，doing forwards selection.
+We use step() function to add the most informative variables to fit our model. 
+
+```{r}
+
+#forward
+concrete_step_forward = step(concrete_null_lm, scope = list(lower = concrete_null_lm, upper = concrete_full_lm), direction = "forward",trace = F)#大家可以改成T 看它的过程。
+summary(concrete_step_forward)
+#或concrete_step_forward
+```
+
+Obviously, the two models are different,  we need to choose the one which is fitter.
+
+
+---
+### Models performance
+
+#### In sample
+```{r}
+sjPlot::tab_model(
+concrete_step_forward, concrete_step_back,
+show.ci = FALSE,
+show.aic = TRUE,
+dv.labels = c("Forward model"
+,"Backward model"))
+```
+
+For this compare, the AIC of forward model is little smaller than backward model, forward model could be little better.
+
+---
+
+#### Out of sample
+```{r}
+library(caret)
+set.seed(7777)
+cv_F = train(
+compressive_strength ~ cement + superplasticizer + 
+    age + blast_furnace_slag + water + fly_ash, concrete,
+method = "lm",
+trControl = trainControl(
+method = "cv", number = 10,
+verboseIter = FALSE))
+cv_F
+
+cv_B = train(
+compressive_strength ~ cement + blast_furnace_slag + 
+    fly_ash + water + superplasticizer + coarse_aggregate + fine_aggregate + 
+    age, concrete,
+method = "lm",
+trControl = trainControl(
+method = "cv", number = 10,
+verboseIter = FALSE))
+cv_B
+```
+We do the CV estimation, and there are little differences between two models. therefore, we could choose the model which need less information.
+---
+
+### Data Explore
+
+
+#### The fitted model for the model selected.
+
+we choose forward model as our fitted model:
+
+$$\widehat Strength = 29.03 + 0.11 cement + 0.24 superplasticizer + 0.11 age + 0.09 blast furnace slag  -0.22 water + 0.07 fly ash$$
+We can see that the strength is affected more by superplasticizer and water have a negative effect to the strength.
+
+---
+
+### Assumptions Checking
+
+- Independence: Each observation is independent and cannot affect each other. So the independence of data can be satisfied.
+
+```{r}
+library(ggfortify)
+# plts to check assumptions
+autoplot(concrete_step_forward, which = 1:2) + theme_bw()
+
+```
+
+- Linearity: there’s no obvious pattern in the residual vs fitted values plot, so the assumption is satisfied.
+
+- Homoskedasticity: the residuals don’t appear to be fanning out or changing their variability over the range of the fitted values so the assumption is satisfied
+
+- Normality: in the QQ plot, the points are reasonably close to the diagonal line. The normality assumption is approximately satisfied.
+
+---
+
+### Reference
+xxx
